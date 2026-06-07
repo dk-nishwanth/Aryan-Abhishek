@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  X, Send, Copy, Mail, Phone, ArrowUp, ArrowRight, Info, Check, ExternalLink 
+import {
+  X, Send, Copy, Mail, Phone, ArrowUp, ArrowRight, Info, Check, ExternalLink,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { InteractiveRobotSpline } from './ui/interactive-3d-robot';
@@ -10,93 +10,75 @@ interface FooterProps {
 }
 
 export default function Footer({ onOpenContact }: FooterProps) {
-  // Input fields for the sticky note form
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [clientMessage, setClientMessage] = useState('');
   const [copiedText, setCopiedText] = useState<string | null>(null);
 
-  // Status for Formspree submit
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Pupil cursor tracking
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const leftEyeRef = useRef<HTMLDivElement>(null);
   const rightEyeRef = useRef<HTMLDivElement>(null);
   const [leftPupilOffset, setLeftPupilOffset] = useState({ x: 0, y: 0 });
   const [rightPupilOffset, setRightPupilOffset] = useState({ x: 0, y: 0 });
-  
+
   const [isMobile, setIsMobile] = useState(false);
 
-  // Scene URL for 3D Robot provided by the user
   const ROBOT_SCENE_URL = "https://prod.spline.design/PyzDhpQ9E5f1E3MT/scene.splinecode";
 
-  // Check if device is mobile
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Track cursor movement on screen to make the eyes follow - only on desktop
   useEffect(() => {
     if (isMobile) return;
-    
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
     };
     window.addEventListener('mousemove', handleMouseMove);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
+    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [isMobile]);
 
-  // Update eye pupil calculations
   useEffect(() => {
     const calculateOffset = (eyeRef: React.RefObject<HTMLDivElement>) => {
       if (!eyeRef.current) return { x: 0, y: 0 };
       const rect = eyeRef.current.getBoundingClientRect();
       const eyeCenterX = rect.left + rect.width / 2;
       const eyeCenterY = rect.top + rect.height / 2;
-
       const dx = mousePosition.x - eyeCenterX;
       const dy = mousePosition.y - eyeCenterY;
       const angle = Math.atan2(dy, dx);
-      
       const distance = Math.min(Math.hypot(dx, dy), 120);
-      const maxDistance = 6; // max px pupil offset
+      const maxDistance = 6;
       const ratio = distance / 120;
       const offsetLength = ratio * maxDistance;
-
       return {
         x: Math.cos(angle) * offsetLength,
         y: Math.sin(angle) * offsetLength,
       };
     };
-
     setLeftPupilOffset(calculateOffset(leftEyeRef));
     setRightPupilOffset(calculateOffset(rightEyeRef));
   }, [mousePosition]);
 
-  // Form submission dispatcher inside footer
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clientName || !clientEmail || !clientMessage) return;
-    
+
     setIsSubmitting(true);
     setErrorMsg('');
 
-    // Dynamically retrieve Formspree form ID from environment variables
-    const formspreeId = (import.meta as any).env?.VITE_FORMSPREE_FORM_ID || "";
+    const formspreeId = (import.meta as any).env?.VITE_FORMSPREE_FORM_ID || '';
 
     if (!formspreeId) {
-      // Fallback submission flow for preview/testing
       setTimeout(() => {
         setIsSubmitting(false);
         setSuccess(true);
@@ -115,13 +97,13 @@ export default function Footer({ onOpenContact }: FooterProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          Accept: 'application/json',
         },
         body: JSON.stringify({
           name: clientName,
           email: clientEmail,
-          message: clientMessage
-        })
+          message: clientMessage,
+        }),
       });
 
       if (response.ok) {
@@ -144,7 +126,6 @@ export default function Footer({ onOpenContact }: FooterProps) {
     }
   };
 
-  // Helper to copy data
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setCopiedText(label);
@@ -156,30 +137,32 @@ export default function Footer({ onOpenContact }: FooterProps) {
   };
 
   return (
-    <footer 
-      id="contact-hub-section" 
-      className="relative bg-[#FAF8F5] text-[#1C1917] pt-20 pb-12 px-4 sm:px-6 md:px-12 border-t-2 border-stone-800 overflow-hidden select-none" 
-      style={{ 
-        backgroundImage: 'radial-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px)', 
-        backgroundSize: '24px 24px' 
+    <footer
+      id="contact-hub-section"
+      className="relative bg-[#FAF8F5] text-[#1C1917] pt-20 pb-12 px-4 sm:px-6 md:px-12 border-t-2 border-stone-800 overflow-hidden select-none"
+      style={{
+        backgroundImage: 'radial-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px)',
+        backgroundSize: '24px 24px',
       }}
     >
-      {/* Decorative vertical binding rings on the absolute left to simulate a designer notebook binder */}
+      {/* Decorative binding rings */}
       <div className="absolute left-0 top-0 bottom-0 w-4 bg-transparent border-r-2 border-stone-800 opacity-20 pointer-events-none hidden md:flex flex-col justify-around py-12">
         {Array.from({ length: 15 }).map((_, i) => (
-          <div key={i} className="w-6 h-3.5 bg-gradient-to-r from-stone-400 to-stone-600 rounded-full border border-stone-800 -translate-x-3 shadow-sm" />
+          <div
+            key={i}
+            className="w-6 h-3.5 bg-gradient-to-r from-stone-400 to-stone-600 rounded-full border border-stone-800 -translate-x-3 shadow-sm"
+          />
         ))}
       </div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
+        viewport={{ once: true, margin: '-100px' }}
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         className="max-w-7xl mx-auto relative z-10"
       >
-        
-        {/* Section title & prompt */}
+        {/* Section header */}
         <div className="mb-10 text-center md:text-left">
           <span className="text-[10px] font-mono tracking-[0.25em] text-[#2E8BF7] uppercase block mb-1 font-bold">
             EST. ABHISHEK INTEGRATED DISPATCH
@@ -192,27 +175,23 @@ export default function Footer({ onOpenContact }: FooterProps) {
           </p>
         </div>
 
-        {/* Majestic 2-Column / 3-Column Retro College Container Box */}
-        <div 
+        {/* Main 3-column container */}
+        <div
           className="relative w-full bg-[#FAF8F5] border-2 border-stone-800 rounded-3xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(40,40,40,1)] flex flex-col lg:flex-row mb-16"
           style={{
-            backgroundImage: `
-              linear-gradient(rgba(120, 110, 90, 0.06) 1px, transparent 1px)
-            `,
+            backgroundImage: `linear-gradient(rgba(120, 110, 90, 0.06) 1px, transparent 1px)`,
             backgroundSize: '100% 28px',
           }}
         >
-          {/* Notebook pink margins border lines */}
+          {/* Notebook margin line */}
           <div className="absolute left-6 md:left-12 top-0 bottom-0 w-0.5 bg-rose-300 opacity-40 pointer-events-none z-10" />
 
-          {/* LEFT SUB-COLUMN: Channels & Active Stickers Collage */}
+          {/* LEFT: Channels & Stickers */}
           <div className="flex-1 p-6 md:p-10 lg:p-12 relative border-b-2 lg:border-b-0 lg:border-r-2 border-stone-800 flex flex-col justify-between overflow-hidden">
-            
-            {/* Playful elements & Stickers floating absolute */}
-            {/* Googly Eyes inside left segment */}
+
+            {/* Googly Eyes */}
             <div className="absolute top-8 right-6 flex flex-col items-center z-25">
               <div className="flex gap-1 p-1 bg-white border-2 border-stone-800 rounded-full shadow-[2.5px_2.5px_0px_rgba(0,0,0,1)] scale-90">
-                {/* Left Eye */}
                 <div
                   ref={leftEyeRef}
                   className="w-10 h-10 bg-white rounded-full border-2 border-stone-850 flex items-center justify-center relative overflow-hidden"
@@ -227,7 +206,6 @@ export default function Footer({ onOpenContact }: FooterProps) {
                     <div className="w-1 h-1 bg-white rounded-full absolute top-1 left-1" />
                   </div>
                 </div>
-                {/* Right Eye */}
                 <div
                   ref={rightEyeRef}
                   className="w-10 h-10 bg-white rounded-full border-2 border-stone-850 flex items-center justify-center relative overflow-hidden"
@@ -248,7 +226,7 @@ export default function Footer({ onOpenContact }: FooterProps) {
               </span>
             </div>
 
-            {/* Ladybugs Sticker */}
+            {/* Ladybug sticker */}
             <div className="absolute top-10 left-16 flex gap-1 pointer-events-none opacity-80 scale-90">
               <div className="relative">
                 <div className="flex gap-1">
@@ -264,14 +242,14 @@ export default function Footer({ onOpenContact }: FooterProps) {
               </div>
             </div>
 
-            {/* Flaming Heart Sticker */}
+            {/* Flaming Heart sticker */}
             <div className="absolute bottom-[23%] right-[22%] text-center cursor-pointer pointer-events-auto hover:rotate-12 transition z-20 scale-90">
               <div className="relative inline-block animate-pulse" style={{ animationDuration: '2.5s' }}>
                 <div className="absolute -top-6 inset-x-0 flex justify-center gap-0.5">
-                  <span className="w-0.5 h-6 bg-amber-500 rounded-full inline-block animate-bounce" style={{ animationDelay: '0.1s' }}></span>
-                  <span className="w-1 h-8 bg-orange-500 rounded-full inline-block animate-bounce" style={{ animationDelay: '0.3s' }}></span>
-                  <span className="w-1.5 h-9 bg-red-500 rounded-full inline-block animate-bounce" style={{ animationDelay: '0s' }}></span>
-                  <span className="w-1 h-8 bg-orange-500 rounded-full inline-block animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+                  <span className="w-0.5 h-6 bg-amber-500 rounded-full inline-block animate-bounce" style={{ animationDelay: '0.1s' }} />
+                  <span className="w-1 h-8 bg-orange-500 rounded-full inline-block animate-bounce" style={{ animationDelay: '0.3s' }} />
+                  <span className="w-1.5 h-9 bg-red-500 rounded-full inline-block animate-bounce" style={{ animationDelay: '0s' }} />
+                  <span className="w-1 h-8 bg-orange-500 rounded-full inline-block animate-bounce" style={{ animationDelay: '0.4s' }} />
                 </div>
                 <svg width="34" height="30" viewBox="0 0 24 24" className="text-red-500 fill-red-500 drop-shadow-[2px_2px_0_#1c1917] relative z-20">
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" stroke="#1c1917" strokeWidth="1.5" />
@@ -279,7 +257,7 @@ export default function Footer({ onOpenContact }: FooterProps) {
               </div>
             </div>
 
-            {/* Lucky 777 Diamond Green Sticker */}
+            {/* Lucky 777 sticker */}
             <div className="absolute bottom-6 right-6 select-none pointer-events-auto rotate-12 hover:-rotate-12 transition scale-90 z-20">
               <div className="bg-[#40A855] border-2 border-stone-800 p-1.5 text-center text-white flex flex-col items-center justify-center shadow-[3px_3px_0px_rgba(0,0,0,1)] font-mono uppercase text-[8px] w-12 h-12 rounded-xl">
                 <span className="font-black text-[#FFF066] text-xs">777</span>
@@ -287,7 +265,7 @@ export default function Footer({ onOpenContact }: FooterProps) {
               </div>
             </div>
 
-            {/* Rolling Dice Sticker in footer */}
+            {/* Rolling Dice sticker */}
             <div className="absolute bottom-5 left-16 pointer-events-auto scale-90 hidden md:flex gap-2">
               <div className="w-9 h-9 bg-white border-2 border-stone-850 rounded-lg rotate-12 shadow-[2px_2px_0_rgba(0,0,0,1)] flex flex-col justify-between p-1 hover:rotate-6 transition">
                 <div className="flex justify-between">
@@ -304,100 +282,79 @@ export default function Footer({ onOpenContact }: FooterProps) {
               </div>
             </div>
 
-            {/* Core Address / Phone / Coordinates Big Listings */}
+            {/* Contact rows */}
             <div className="space-y-4 pt-16 md:pt-20 max-w-lg z-20">
-              {/* Row 1: PHONE */}
               <div
                 onClick={() => handleCopy('+919873286730', 'Phone')}
                 className="group cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between sm:gap-4 py-2 border-b border-dashed border-stone-300 md:ml-4 ml-0 hover:bg-[#F3EFE6]/50 transition rounded-lg px-2"
               >
-                <div className="flex items-center gap-1">
-                  <span className="font-display font-black text-xl sm:text-2xl text-stone-900 tracking-tight group-hover:text-[#2E8BF7] transition">
-                    (1) PHONE
-                  </span>
-                </div>
+                <span className="font-display font-black text-xl sm:text-2xl text-stone-900 tracking-tight group-hover:text-[#2E8BF7] transition">
+                  (1) PHONE
+                </span>
                 <div className="font-mono text-stone-700 font-bold text-xs sm:text-sm tracking-wide flex items-center gap-1.5">
                   <span>+91 98-732-867-30</span>
-                  <span className="opacity-40 group-hover:opacity-100 transition text-[#2E8BF7]">
-                    <Copy size={11} />
-                  </span>
+                  <span className="opacity-40 group-hover:opacity-100 transition text-[#2E8BF7]"><Copy size={11} /></span>
                 </div>
               </div>
 
-              {/* Row 2: EMAIL */}
               <div
                 onClick={() => handleCopy('aryan19abhishek@gmail.com', 'Email')}
                 className="group cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between sm:gap-4 py-2 border-b border-dashed border-stone-300 md:ml-4 ml-0 hover:bg-[#F3EFE6]/50 transition rounded-lg px-2"
               >
-                <div className="flex items-center gap-1">
-                  <span className="font-display font-black text-xl sm:text-2xl text-stone-900 tracking-tight group-hover:text-[#2E8BF7] transition">
-                    (2) EMAIL
-                  </span>
-                </div>
+                <span className="font-display font-black text-xl sm:text-2xl text-stone-900 tracking-tight group-hover:text-[#2E8BF7] transition">
+                  (2) EMAIL
+                </span>
                 <div className="font-mono text-stone-700 font-bold text-xs sm:text-sm tracking-wide flex items-center gap-1.5 lowercase">
                   <span>aryan19abhishek@gmail.com</span>
-                  <span className="opacity-40 group-hover:opacity-100 transition text-[#2E8BF7]">
-                    <Copy size={11} />
-                  </span>
+                  <span className="opacity-40 group-hover:opacity-100 transition text-[#2E8BF7]"><Copy size={11} /></span>
                 </div>
               </div>
 
-              {/* Row 3: LINKEDIN */}
               <a
                 href="https://linkedin.com"
                 target="_blank"
                 rel="noreferrer"
                 className="group flex flex-col sm:flex-row sm:items-center justify-between sm:gap-4 py-2 border-b border-dashed border-stone-300 md:ml-4 ml-0 hover:bg-[#F3EFE6]/50 transition rounded-lg px-2 cursor-pointer block"
               >
-                <div className="flex items-center gap-1">
-                  <span className="font-display font-black text-xl sm:text-2xl text-stone-900 tracking-tight group-hover:text-[#2E8BF7] transition">
-                    (3) LINKEDIN
-                  </span>
-                </div>
+                <span className="font-display font-black text-xl sm:text-2xl text-stone-900 tracking-tight group-hover:text-[#2E8BF7] transition">
+                  (3) LINKEDIN
+                </span>
                 <div className="font-mono text-stone-700 font-bold text-xs sm:text-sm tracking-wide flex items-center gap-1.5 uppercase">
                   <span>WWW.LINKEDIN.COM</span>
                   <span className="text-stone-400 group-hover:translate-x-0.5 transition">→</span>
                 </div>
               </a>
 
-              {/* Row 4: INSTAGRAM */}
               <a
                 href="https://instagram.com"
                 target="_blank"
                 rel="noreferrer"
                 className="group flex flex-col sm:flex-row sm:items-center justify-between sm:gap-4 py-2 border-b border-dashed border-stone-300 md:ml-4 ml-0 hover:bg-[#F3EFE6]/50 transition rounded-lg px-2 cursor-pointer block"
               >
-                <div className="flex items-center gap-1">
-                  <span className="font-display font-black text-xl sm:text-2xl text-stone-900 tracking-tight group-hover:text-[#2E8BF7] transition">
-                    (4) INSTAGRAM
-                  </span>
-                </div>
+                <span className="font-display font-black text-xl sm:text-2xl text-stone-900 tracking-tight group-hover:text-[#2E8BF7] transition">
+                  (4) INSTAGRAM
+                </span>
                 <div className="font-mono text-stone-700 font-bold text-xs sm:text-sm tracking-wide flex items-center gap-1.5">
                   <span>@ARYAN.ABHISHEK</span>
                   <span className="text-stone-400 group-hover:translate-x-0.5 transition">→</span>
                 </div>
               </a>
 
-              {/* Row 5: REFERENCES */}
               <div
                 onClick={() => handleCopy('References available upon formal request', 'References')}
-                 className="group cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between sm:gap-4 py-2 md:ml-4 ml-0 hover:bg-[#F3EFE6]/50 transition rounded-lg px-2"
+                className="group cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between sm:gap-4 py-2 md:ml-4 ml-0 hover:bg-[#F3EFE6]/50 transition rounded-lg px-2"
               >
-                <div className="flex items-center gap-1">
-                  <span className="font-display font-black text-xl sm:text-2xl text-stone-900 tracking-tight group-hover:text-[#2E8BF7] transition">
-                    (5) REFERENCES
-                  </span>
-                </div>
+                <span className="font-display font-black text-xl sm:text-2xl text-stone-900 tracking-tight group-hover:text-[#2E8BF7] transition">
+                  (5) REFERENCES
+                </span>
                 <div className="font-mono text-stone-700 font-bold text-xs sm:text-sm tracking-wide flex items-center gap-1.5 uppercase">
                   <span>UPON REQUEST</span>
-                  <span className="opacity-40 group-hover:opacity-100 transition text-[#2E8BF7]">
-                    <Copy size={11} />
-                  </span>
+                  <span className="opacity-40 group-hover:opacity-100 transition text-[#2E8BF7]"><Copy size={11} /></span>
                 </div>
               </div>
             </div>
 
-            {/* Toast success indicator absolute inside details */}
+            {/* Copy toast */}
             <AnimatePresence>
               {copiedText && (
                 <motion.div
@@ -413,24 +370,28 @@ export default function Footer({ onOpenContact }: FooterProps) {
             </AnimatePresence>
           </div>
 
-          {/* MIDDLE COLUMN: Whobee spline robot visualization center section */}
-          <div className="flex-1 min-h-[300px] border-b-2 lg:border-b-0 lg:border-r-2 border-stone-800 relative bg-[#E1EEFA]/30 flex flex-col overflow-hidden">
-            {/* Pink binder lines behind the robot frame */}
-            <div className="absolute left-6 md:left-12 top-0 bottom-0 w-0.5 bg-rose-300 opacity-20 pointer-events-none" />
-            
-            {/* The actual Interactive Spline Viewport */}
-            <div className="flex-1 w-full relative z-10 select-auto">
+          {/* MIDDLE: 3D Robot - hide on mobile */}
+          <div 
+            className="flex-1 border-b-2 lg:border-b-0 lg:border-r-2 border-stone-800 relative bg-[#E1EEFA]/30 flex flex-col overflow-hidden robot-column hidden lg:flex" 
+            style={{ 
+              // Tablet and desktop only
+              minHeight: 'auto', 
+            }} 
+          > 
+            <div className="absolute left-6 md:left-12 top-0 bottom-0 w-0.5 bg-rose-300 opacity-20 pointer-events-none" /> 
+ 
+            {/* Robot fills entire column */} 
+            <div className="flex-1 w-full h-full relative z-10 overflow-visible"> 
               <InteractiveRobotSpline 
                 scene={ROBOT_SCENE_URL} 
-                className="w-full h-full"
-              />
-            </div>
+                className="w-full h-full" 
+              /> 
+            </div> 
           </div>
 
-          {/* RIGHT SUB-COLUMN: Memo Stamp Direct Contact Form */}
+          {/* RIGHT: Contact Form */}
           <div className="w-full lg:w-[350px] bg-[#FEFDF9] p-6 md:p-8 pt-12 flex flex-col justify-between relative overflow-hidden">
-            
-            {/* Sticky tape indicator */}
+
             <div className="absolute top-10 left-1/2 -translate-x-1/2 w-28 h-6 bg-amber-150/40 rotate-1 border border-dashed border-amber-300 opacity-90 pointer-events-none text-[8px] font-mono text-center pt-1.5 uppercase tracking-widest text-amber-850 font-bold">
               MEMO_TAPE
             </div>
@@ -451,7 +412,6 @@ export default function Footer({ onOpenContact }: FooterProps) {
                   animate={{ opacity: 1, scale: 1 }}
                   className="py-12 text-center flex flex-col items-center justify-center space-y-4"
                 >
-                  {/* Delivered stamp element */}
                   <div className="w-20 h-20 rounded-full border-4 border-dashed border-[#2E8BF7] text-[#2E8BF7] p-1 flex items-center justify-center font-black rotate-12 animate-pulse font-mono tracking-wide text-[11px]">
                     DELIVERED
                   </div>
@@ -470,7 +430,6 @@ export default function Footer({ onOpenContact }: FooterProps) {
                     </div>
                   )}
 
-                  {/* Name field */}
                   <div className="space-y-0.5">
                     <label className="block text-[8px] font-mono font-black text-stone-500 uppercase tracking-widest">
                       (A) NAME / CALLSIGN
@@ -486,7 +445,6 @@ export default function Footer({ onOpenContact }: FooterProps) {
                     />
                   </div>
 
-                  {/* Email field */}
                   <div className="space-y-0.5">
                     <label className="block text-[8px] font-mono font-black text-stone-500 uppercase tracking-widest">
                       (B) COMMUNION EMAIL
@@ -502,7 +460,6 @@ export default function Footer({ onOpenContact }: FooterProps) {
                     />
                   </div>
 
-                  {/* Message brief */}
                   <div className="space-y-0.5">
                     <label className="block text-[8px] font-mono font-black text-stone-500 uppercase tracking-widest">
                       (C) PROJECT MEMO BRIEF
@@ -518,7 +475,6 @@ export default function Footer({ onOpenContact }: FooterProps) {
                     />
                   </div>
 
-                  {/* Submit Button */}
                   <button
                     type="submit"
                     disabled={isSubmitting}
@@ -533,31 +489,24 @@ export default function Footer({ onOpenContact }: FooterProps) {
                         TRANSMITTING...
                       </>
                     ) : (
-                      <>
-                        STAMP & TRANSMIT <Send size={9} />
-                      </>
+                      <>STAMP & TRANSMIT <Send size={9} /></>
                     )}
                   </button>
                 </form>
               )}
             </div>
 
-            {/* Warning footer inside form column */}
             <div className="mt-8 pt-4 border-t border-stone-200 flex items-start gap-1.5 text-[9px] font-mono text-stone-500">
               <Info size={11} className="text-stone-400 shrink-0 mt-0.5" />
               <p className="leading-snug">
                 Every dispatch is heavily bound via secured handshakes. Normal response guidelines apply.
               </p>
             </div>
-
           </div>
-
         </div>
 
-        {/* Lower layout link grid - matches original template columns strictly */}
+        {/* Footer link grid */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 relative z-10 pb-12 border-b border-stone-200">
-          
-          {/* Column A: Logo, desc and copyright */}
           <div className="md:col-span-5 space-y-6">
             <span className="font-display text-2xl font-black tracking-tight text-stone-900 flex items-center gap-1.5">
               Aryan Abhishek<span className="text-[9px] text-[#2E8BF7] font-sans font-extrabold relative -top-1.5">TM</span>
@@ -575,7 +524,6 @@ export default function Footer({ onOpenContact }: FooterProps) {
 
           <div className="hidden md:block md:col-span-1" />
 
-          {/* Column B: Navigate navigation links list */}
           <div className="md:col-span-3 space-y-4">
             <h4 className="text-xs font-mono text-stone-500 uppercase tracking-widest font-extrabold">Navigation</h4>
             <ul className="space-y-2 text-xs font-medium text-stone-600">
@@ -583,10 +531,10 @@ export default function Footer({ onOpenContact }: FooterProps) {
                 { name: 'Home', id: 'hero' },
                 { name: 'Projects', id: 'projects' },
                 { name: 'Experience', id: 'experience' },
-                { name: 'Skills & Tools', id: 'about' }
+                { name: 'Skills & Tools', id: 'about' },
               ].map((link) => (
                 <li key={link.name}>
-                  <button 
+                  <button
                     onClick={() => document.getElementById(link.id)?.scrollIntoView({ behavior: 'smooth' })}
                     className="hover:text-[#2E8BF7] transition cursor-pointer font-bold font-mono tracking-wider uppercase text-[10px]"
                   >
@@ -597,7 +545,6 @@ export default function Footer({ onOpenContact }: FooterProps) {
             </ul>
           </div>
 
-          {/* Column C: Social Media labels tree */}
           <div className="md:col-span-3 space-y-4">
             <h4 className="text-xs font-mono text-[#2E8BF7] uppercase tracking-widest font-extrabold">Connect Directly</h4>
             <ul className="space-y-2 text-xs font-medium text-stone-650">
@@ -605,29 +552,31 @@ export default function Footer({ onOpenContact }: FooterProps) {
                 { name: 'Behance Portfolio', url: 'https://behance.net/aryanabhishek19' },
                 { name: 'Personal Website', url: 'http://www.aryanabhishek.com' },
                 { name: 'Write an Email', url: 'mailto:aryan19abhishek@gmail.com' },
-                { name: 'Call +91 98-732-867-30', url: 'tel:+919873286730' }
+                { name: 'Call +91 98-732-867-30', url: 'tel:+919873286730' },
               ].map((soc) => (
                 <li key={soc.name}>
-                  <a href={soc.url} target="_blank" rel="noreferrer" className="hover:text-[#2E8BF7] transition flex items-center gap-1.5 text-stone-600 hover:text-[#2e8bf7] font-bold font-mono tracking-wider uppercase text-[9.5px]">
+                  <a
+                    href={soc.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-[#2E8BF7] transition flex items-center gap-1.5 text-stone-600 font-bold font-mono tracking-wider uppercase text-[9.5px]"
+                  >
                     {soc.name} <ExternalLink size={9} className="opacity-55" />
                   </a>
                 </li>
               ))}
             </ul>
           </div>
-
         </div>
 
-        {/* Thick footer brand banner with scroll to top trigger as seen in layout */}
+        {/* Brand banner + scroll to top */}
         <div className="pt-8 flex items-center justify-between text-stone-500 relative z-10 flex-wrap gap-4">
           <div className="font-display text-[9vw] md:text-[8vw] font-black tracking-tighter leading-none select-none text-stone-900 opacity-5">
             ABHISHEK™
           </div>
-
-          {/* Scroll to top */}
           <button
             onClick={scrollToTop}
-            className="h-11 w-11 rounded-full border-2 border-stone-800 hover:border-[#2E8BF7] bg-white hover:bg-stone-50 flex items-center justify-center text-stone-500 hover:text-[#2E8BF7] transition-all cursor-pointer shadow-[2px_2px_0 0 rgba(40,40,40,1)] hover:translate-y-[-1px]"
+            className="h-11 w-11 rounded-full border-2 border-stone-800 hover:border-[#2E8BF7] bg-white hover:bg-stone-50 flex items-center justify-center text-stone-500 hover:text-[#2E8BF7] transition-all cursor-pointer shadow-[2px_2px_0_0_rgba(40,40,40,1)] hover:translate-y-[-1px]"
             title="Scroll to Top"
           >
             <ArrowUp size={16} />
