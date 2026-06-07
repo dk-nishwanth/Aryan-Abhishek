@@ -13,6 +13,7 @@ interface HeroProps {
 export default function Hero({ onOpenContact }: HeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isMobile, setIsMobile] = useState(false);
 
   // Retro interactive state hooks matching Welcome Screen
   const [activeTab, setActiveTab] = useState<'decals' | 'motion' | 'code'>('decals');
@@ -22,19 +23,41 @@ export default function Hero({ onOpenContact }: HeroProps) {
   const [showDogBubble, setShowDogBubble] = useState(false);
   const [showPackDetails, setShowPackDetails] = useState(false);
 
+  // Check if device is mobile
   useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    // Only add mouse move listener on non-mobile devices
+    if (isMobile) return;
+
+    let rafId: number;
     const handleMouseMove = (e: MouseEvent) => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      // Normalized offset from -0.5 to 0.5
-      const x = (e.clientX - rect.left) / rect.width - 0.5;
-      const y = (e.clientY - rect.top) / rect.height - 0.5;
-      setMousePosition({ x, y });
+      // Use requestAnimationFrame for smooth updates
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        // Normalized offset from -0.5 to 0.5
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        setMousePosition({ x, y });
+      });
     };
 
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(rafId);
+    };
+  }, [isMobile]);
 
   const scrollToProjects = () => {
     document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
@@ -48,21 +71,23 @@ export default function Hero({ onOpenContact }: HeroProps) {
     >
       <div className="relative w-full h-full px-6 md:px-12 flex flex-col justify-between bg-transparent min-h-0 z-10">
         
-        {/* Dynamic Background Noise & Grain Glows */}
-        <div className="absolute inset-0 z-0 pointer-events-none opacity-60">
-          <div 
-            className="absolute right-[-5%] top-[-5%] w-[65%] h-[75%] rounded-full bg-gradient-to-br from-[#2E8BF7]/20 via-[#12B4D1]/15 to-[#FFA82E]/10 blur-[120px] transition-transform duration-500"
-            style={{
-              transform: `translate(${mousePosition.x * 40}px, ${mousePosition.y * 40}px)`,
-            }}
-          />
-          <div 
-            className="absolute left-[-5%] bottom-[-5%] w-[50%] h-[55%] rounded-full bg-[#0FA958]/10 blur-[100px] transition-transform duration-700"
-            style={{
-              transform: `translate(${mousePosition.y * -30}px, ${mousePosition.x * -30}px)`,
-            }}
-          />
-        </div>
+        {/* Dynamic Background Noise & Grain Glows - only on desktop */}
+        {!isMobile && (
+          <div className="absolute inset-0 z-0 pointer-events-none opacity-60">
+            <div 
+              className="absolute right-[-5%] top-[-5%] w-[65%] h-[75%] rounded-full bg-gradient-to-br from-[#2E8BF7]/20 via-[#12B4D1]/15 to-[#FFA82E]/10 blur-[120px] transition-transform duration-500"
+              style={{
+                transform: `translate(${mousePosition.x * 40}px, ${mousePosition.y * 40}px)`,
+              }}
+            />
+            <div 
+              className="absolute left-[-5%] bottom-[-5%] w-[50%] h-[55%] rounded-full bg-[#0FA958]/10 blur-[100px] transition-transform duration-700"
+              style={{
+                transform: `translate(${mousePosition.y * -30}px, ${mousePosition.x * -30}px)`,
+              }}
+            />
+          </div>
+        )}
 
         {/* Decorative vertical/horizontal thin tech grid lines matching welcome screen frames */}
         <div className="absolute inset-0 z-0 grid grid-cols-12 pointer-events-none opacity-[0.06]">

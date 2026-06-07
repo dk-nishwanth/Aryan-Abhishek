@@ -27,12 +27,27 @@ export default function Footer({ onOpenContact }: FooterProps) {
   const rightEyeRef = useRef<HTMLDivElement>(null);
   const [leftPupilOffset, setLeftPupilOffset] = useState({ x: 0, y: 0 });
   const [rightPupilOffset, setRightPupilOffset] = useState({ x: 0, y: 0 });
+  
+  const [isMobile, setIsMobile] = useState(false);
 
   // Scene URL for 3D Robot provided by the user
   const ROBOT_SCENE_URL = "https://prod.spline.design/PyzDhpQ9E5f1E3MT/scene.splinecode";
 
-  // Track cursor movement on screen to make the eyes follow
+  // Check if device is mobile
   useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Track cursor movement on screen to make the eyes follow - only on desktop
+  useEffect(() => {
+    if (isMobile) return;
+    
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
     };
@@ -40,7 +55,7 @@ export default function Footer({ onOpenContact }: FooterProps) {
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, []);
+  }, [isMobile]);
 
   // Update eye pupil calculations
   useEffect(() => {
@@ -399,7 +414,7 @@ export default function Footer({ onOpenContact }: FooterProps) {
           </div>
 
           {/* MIDDLE COLUMN: Whobee spline robot visualization center section */}
-          <div className="flex-1 min-h-[300px] border-b-2 lg:border-b-0 lg:border-r-2 border-stone-800 relative bg-[#E1EEFA]/30 flex flex-col justify-between overflow-hidden">
+          <div className="flex-1 min-h-[300px] border-b-2 lg:border-b-0 lg:border-r-2 border-stone-800 relative bg-[#E1EEFA]/30 flex flex-col overflow-hidden">
             {/* Pink binder lines behind the robot frame */}
             <div className="absolute left-6 md:left-12 top-0 bottom-0 w-0.5 bg-rose-300 opacity-20 pointer-events-none" />
             
@@ -407,7 +422,7 @@ export default function Footer({ onOpenContact }: FooterProps) {
             <div className="flex-1 w-full relative z-10 select-auto">
               <InteractiveRobotSpline 
                 scene={ROBOT_SCENE_URL} 
-                className="w-full h-full min-h-[380px]"
+                className="w-full h-full"
               />
             </div>
           </div>
